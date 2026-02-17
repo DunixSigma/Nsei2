@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atribuição de Papéis</title>
+
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<!-- SheetJS (Excel) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- jsPDF (PDF) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+<style>
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #e9f0ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 15px;
+  margin: 0;
+}
+.container {
+  background: white;
+  width: 95%;
+  max-width: 1000px;
+  padding: 30px 35px;
+  border-radius: 20px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+h1 {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #2a5298;
+}
+textarea {
+  width: 100%;
+  height: 100px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-family: monospace;
+  font-size: 0.95rem;
+  transition: 0.3s;
+}
+textarea:focus {
+  outline: none;
+  border-color: #2a5298;
+  box-shadow: 0 0 8px rgba(42,82,152,0.3);
+}
+button {
+  padding: 10px 18px;
+  margin: 6px 4px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+button.sort { background: #2a5298; color: white; }
+button.reset { background: #e74c3c; color: white; }
+button.pdf { background: #f39c12; color: white; }
+button.excel { background: #27ae60; color: white; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  border-radius: 10px;
+  overflow: hidden;
+  font-size: 0.95rem;
+}
+thead { background: #2a5298; color: white; }
+th, td { padding: 12px; text-align: left; }
+tbody tr:nth-child(even) { background: #f3f6ff; }
+tbody tr:hover { background: #dce5ff; transition: 0.3s; }
+@media (max-width:600px){
+  th,td,textarea{font-size:12px;padding:8px;}
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>Atribuição de Papéis</h1>
+
+<h3>Alunos</h3>
+<textarea id="txtAlunos" placeholder=""></textarea>
+<button class="sort" onclick="carregarAlunos()">Carregar alunos</button>
+
+<h3>Papéis</h3>
+<textarea id="txtPapeis" placeholder=""></textarea>
+<button class="sort" onclick="carregarPapeis()">Carregar papéis</button>
+
+<div style="margin-top:12px;">
+<button class="sort" onclick="sortear()">Sortear Papéis</button>
+<button class="reset" onclick="resetar()">Reset</button>
+<button class="pdf" onclick="exportarPDF()">Exportar PDF</button>
+<button class="excel" onclick="exportarExcel()">Exportar Excel</button>
+</div>
+
+<h3>Pares atribuídos</h3>
+<table>
+<thead>
+<tr><th>Aluno</th><th>Papel</th></tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
+</div>
+
+<script>
+let alunos = [];
+let papeis = [];
+let pares = [];
+
+function salvar() {
+  localStorage.setItem("dados", JSON.stringify({alunos, papeis, pares}));
+}
+
+function carregar() {
+  const dados = JSON.parse(localStorage.getItem("dados"));
+  if(dados){
+    alunos = dados.alunos || [];
+    papeis = dados.papeis || [];
+    pares = dados.pares || [];
+    document.getElementById("txtAlunos").value = alunos.join("\n");
+    document.getElementById("txtPapeis").value = papeis.join("\n");
+    atualizarTabela();
+  }
+}
+
+function carregarAlunos(){
+  alunos = document.getElementById("txtAlunos").value.split("\n").filter(a=>a.trim());
+  salvar();
+}
+
+function carregarPapeis(){
+  papeis = document.getElementById("txtPapeis").value.split("\n").filter(p=>p.trim());
+  salvar();
+}
+
+function sortear(){
+  pares = [];
+  let p = [...papeis];
+  p.sort(()=>Math.random()-0.5);
+  let max = Math.min(alunos.length, p.length);
+  for(let i=0;i<max;i++){
+    pares.push({aluno:alunos[i], papel:p[i]});
+  }
+  atualizarTabela();
+  salvar();
+}
+
+function atualizarTabela(){
+  const tabela = document.getElementById("tabela");
+  tabela.innerHTML="";
+  pares.forEach(par=>{
+    tabela.innerHTML+=`<tr><td>${par.aluno}</td><td>${par.papel}</td></tr>`;
+  });
+}
+
+function resetar(){
+  if(confirm("Tens a certeza que queres apagar tudo?")){
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function exportarPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(18);
+  doc.text("Atribuição de Papéis", 14, 20);
+  doc.autoTable({
+    startY: 30,
+    head: [['Aluno','Papel']],
+    body: pares.map(par=>[par.aluno, par.papel]),
+    theme: 'grid',
+    headStyles: {fillColor:[42,82,152], textColor:255, halign:'center'},
+    bodyStyles: {halign:'center'}
+  });
+  doc.save("Atribuicao_Papeis.pdf");
+}
+
+function exportarExcel(){
+  let dadosExcel = [["Aluno","Papel"], ...pares.map(par=>[par.aluno,par.papel])];
+  const ws = XLSX.utils.aoa_to_sheet(dadosExcel);
+  ws["!cols"] = [{wch:30},{wch:30}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Pares");
+  XLSX.writeFile(wb, "Atribuicao_Papeis.xlsx");
+}
+
+carregar();
+</script>
+
+</body>
+</html>
