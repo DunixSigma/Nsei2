@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Tabela Profissional</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <!-- SheetJS (Excel) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- jsPDF (PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            width: 95%;
+            max-width: 1000px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1e3c72;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        thead {
+            background: #1e3c72;
+            color: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            font-weight: 600;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #f3f6ff;
+        }
+
+        tbody tr:hover {
+            background: #dce5ff;
+            transition: 0.3s;
+        }
+
+        .buttons {
+            text-align: center;
+        }
+
+        button {
+            padding: 12px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .excel {
+            background: #1D6F42;
+            color: white;
+        }
+
+        .excel:hover {
+            background: #155d36;
+        }
+
+        .pdf {
+            background: #c0392b;
+            color: white;
+        }
+
+        .pdf:hover {
+            background: #962d22;
+        }
+
+        @media (max-width: 600px) {
+            th, td {
+                font-size: 12px;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Lista de Membros</h1>
+
+    <table id="tabela">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Idade</th>
+                <th>Cargo</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>João Silva</td>
+                <td>20</td>
+                <td>Admin</td>
+            </tr>
+            <tr>
+                <td>Maria Costa</td>
+                <td>19</td>
+                <td>Moderador</td>
+            </tr>
+            <tr>
+                <td>Pedro Santos</td>
+                <td>22</td>
+                <td>Trial Staff</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="buttons">
+        <button class="excel" onclick="exportExcel()">Exportar para Excel</button>
+        <button class="pdf" onclick="exportPDF()">Exportar para PDF</button>
+    </div>
+</div>
+
+<script>
+function exportExcel() {
+    const tabela = document.getElementById("tabela");
+    const wb = XLSX.utils.table_to_book(tabela, {sheet: "Sheet1"});
+    XLSX.writeFile(wb, "Tabela.xlsx");
+}
+
+async function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    doc.text("Lista de Membros", 14, 15);
+
+    doc.autoTable({
+        html: '#tabela',
+        startY: 20,
+        theme: 'grid',
+        headStyles: { fillColor: [30, 60, 114] }
+    });
+
+    doc.save("Tabela.pdf");
+}
+</script>
+
+</body>
+</html>
