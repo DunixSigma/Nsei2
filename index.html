@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atribuição de Papéis</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 15px;
+  margin: 0;
+}
+
+h1 { text-align: center; }
+
+textarea {
+  width: 100%;
+  height: 100px;
+  margin-bottom: 5px;
+}
+
+button {
+  margin: 5px 3px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #007bff;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover { opacity: 0.9; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: white;
+}
+
+th, td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+th {
+  background: #f0f0f0;
+}
+</style>
+</head>
+<body>
+
+<h1>Atribuição de Papéis</h1>
+
+<h3>Alunos</h3>
+<textarea id="txtAlunos"></textarea>
+<button onclick="carregarAlunos()">Carregar alunos</button>
+
+<h3>Papéis</h3>
+<textarea id="txtPapeis"></textarea>
+<button onclick="carregarPapeis()">Carregar papéis</button>
+
+<br>
+<button onclick="sortear()">Sortear Todos</button>
+<button onclick="resetar()">Reset</button>
+<button onclick="exportarPDF()">Exportar PDF</button>
+<button onclick="exportarExcel()">Exportar Excel</button>
+
+<h3>Pares atribuídos</h3>
+<table>
+<thead>
+<tr>
+<th>Aluno</th>
+<th>Papel</th>
+</tr>
+</thead>
+<tbody id="tabela"></tbody>
+</table>
+
+<!-- Bibliotecas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+let alunos = [];
+let papeis = [];
+let pares = [];
+
+function salvar() {
+  localStorage.setItem("dados", JSON.stringify({alunos, papeis, pares}));
+}
+
+function carregar() {
+  const dados = JSON.parse(localStorage.getItem("dados"));
+  if(dados){
+    alunos = dados.alunos || [];
+    papeis = dados.papeis || [];
+    pares = dados.pares || [];
+    document.getElementById("txtAlunos").value = alunos.join("\n");
+    document.getElementById("txtPapeis").value = papeis.join("\n");
+    atualizarTabela();
+  }
+}
+
+function carregarAlunos(){
+  alunos = document.getElementById("txtAlunos").value
+    .split("\n")
+    .filter(a=>a.trim());
+  salvar();
+}
+
+function carregarPapeis(){
+  papeis = document.getElementById("txtPapeis").value
+    .split("\n")
+    .filter(p=>p.trim());
+  salvar();
+}
+
+function sortear(){
+  pares = [];
+  let a = [...alunos];
+  let p = [...papeis];
+
+  a.sort(()=>Math.random()-0.5);
+  p.sort(()=>Math.random()-0.5);
+
+  let max = Math.min(a.length,p.length);
+
+  for(let i=0;i<max;i++){
+    pares.push({aluno:a[i], papel:p[i]});
+  }
+
+  atualizarTabela();
+  salvar();
+}
+
+function atualizarTabela(){
+  const tabela = document.getElementById("tabela");
+  tabela.innerHTML="";
+  pares.forEach(par=>{
+    tabela.innerHTML+=`
+      <tr>
+        <td>${par.aluno}</td>
+        <td>${par.papel}</td>
+      </tr>`;
+  });
+}
+
+function resetar(){
+  if(confirm("Tens a certeza que queres apagar tudo?")){
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function exportarPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+
+  const dataAtual = new Date().toLocaleDateString("pt-PT");
+
+  doc.setFontSize(16);
+  doc.text("Atribuição de Papéis", 14, 15);
+
+  doc.setFontSize(10);
+  doc.text("Data: " + dataAtual, 14, 22);
+  doc.text("Escola: ____________________", 14, 28);
+
+  let startY = 35;
+  let rowHeight = 10;
+
+  doc.setFillColor(230,230,230);
+  doc.rect(14, startY, 80, rowHeight, "F");
+  doc.rect(94, startY, 80, rowHeight, "F");
+
+  doc.text("Aluno", 18, startY+7);
+  doc.text("Papel", 98, startY+7);
+
+  startY += rowHeight;
+
+  pares.forEach(par=>{
+    doc.rect(14, startY, 80, rowHeight);
+    doc.rect(94, startY, 80, rowHeight);
+
+    doc.text(par.aluno, 18, startY+7);
+    doc.text(par.papel, 98, startY+7);
+
+    startY += rowHeight;
+  });
+
+  doc.save("Pares_"+dataAtual+".pdf");
+}
+
+function exportarExcel(){
+  let dadosExcel = [
+    ["Aluno","Papel"],
+    ...pares.map(par=>[par.aluno,par.papel])
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(dadosExcel);
+
+  ws["!cols"] = [
+    {wch:25},
+    {wch:25}
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Pares");
+
+  const dataAtual = new Date().toLocaleDateString("pt-PT");
+
+  XLSX.writeFile(wb, "Pares_"+dataAtual+".xlsx");
+}
+
+carregar();
+</script>
+
+</body>
+</html>
