@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorteador</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f4f4;
+    margin:0;
+    padding:0;
+    text-align:center;
+}
+
+header{
+    background:#0077cc;
+    color:white;
+    padding:15px;
+    position:relative;
+}
+
+#langBtn{
+    position:absolute;
+    right:15px;
+    top:15px;
+    padding:5px 10px;
+    border:none;
+    cursor:pointer;
+}
+
+.container{
+    padding:20px;
+}
+
+textarea{
+    width:90%;
+    max-width:400px;
+    height:100px;
+    margin:10px 0;
+}
+
+button{
+    padding:10px 15px;
+    margin:5px;
+    cursor:pointer;
+}
+
+table{
+    margin:20px auto;
+    border-collapse:collapse;
+    width:90%;
+    max-width:500px;
+    background:white;
+}
+
+th, td{
+    border:1px solid #ccc;
+    padding:8px;
+}
+
+footer{
+    margin-top:30px;
+    padding:15px;
+    background:#e0e0e0;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1 id="title">Sorteador</h1>
+    <button id="langBtn" onclick="toggleLang()">EN</button>
+</header>
+
+<div class="container">
+
+    <h3 id="label1">Lista 1</h3>
+    <textarea id="lista1" placeholder="Um nome por linha"></textarea>
+
+    <h3 id="label2">Lista 2</h3>
+    <textarea id="lista2" placeholder="Um item por linha"></textarea>
+
+    <br>
+    <button onclick="sortear()" id="drawBtn">Sortear</button>
+    <button onclick="limpar()" id="clearBtn">Limpar</button>
+
+    <table id="resultado">
+        <thead>
+            <tr>
+                <th id="col1">Lista 1</th>
+                <th id="col2">Lista 2</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+</div>
+
+<footer>
+    © 2026 Duarte Pedrosa. Todos os direitos reservados.
+</footer>
+
+<script>
+let currentLang = "pt";
+
+function toggleLang(){
+    if(currentLang === "pt"){
+        currentLang = "en";
+        document.getElementById("title").innerText = "Random Pair Generator";
+        document.getElementById("label1").innerText = "List 1";
+        document.getElementById("label2").innerText = "List 2";
+        document.getElementById("drawBtn").innerText = "Draw";
+        document.getElementById("clearBtn").innerText = "Clear";
+        document.getElementById("col1").innerText = "List 1";
+        document.getElementById("col2").innerText = "List 2";
+        document.getElementById("langBtn").innerText = "PT";
+        document.getElementById("lista1").placeholder = "One per line";
+        document.getElementById("lista2").placeholder = "One per line";
+    }else{
+        currentLang = "pt";
+        document.getElementById("title").innerText = "Sorteador";
+        document.getElementById("label1").innerText = "Lista 1";
+        document.getElementById("label2").innerText = "Lista 2";
+        document.getElementById("drawBtn").innerText = "Sortear";
+        document.getElementById("clearBtn").innerText = "Limpar";
+        document.getElementById("col1").innerText = "Lista 1";
+        document.getElementById("col2").innerText = "Lista 2";
+        document.getElementById("langBtn").innerText = "EN";
+        document.getElementById("lista1").placeholder = "Um nome por linha";
+        document.getElementById("lista2").placeholder = "Um item por linha";
+    }
+}
+
+function sortear(){
+    const lista1 = document.getElementById("lista1").value.split("\n").filter(x=>x.trim()!="");
+    const lista2 = document.getElementById("lista2").value.split("\n").filter(x=>x.trim()!="");
+
+    if(lista1.length === 0 || lista2.length === 0){
+        alert("Preenche ambas as listas.");
+        return;
+    }
+
+    let resultado = document.querySelector("#resultado tbody");
+    resultado.innerHTML = "";
+
+    let copiaLista2 = [...lista2];
+
+    lista1.forEach(item1=>{
+        if(copiaLista2.length === 0) return;
+        let index = Math.floor(Math.random()*copiaLista2.length);
+        let item2 = copiaLista2.splice(index,1)[0];
+
+        let row = `<tr><td>${item1}</td><td>${item2}</td></tr>`;
+        resultado.innerHTML += row;
+    });
+
+    localStorage.setItem("dados", JSON.stringify({
+        lista1: document.getElementById("lista1").value,
+        lista2: document.getElementById("lista2").value,
+        tabela: resultado.innerHTML
+    }));
+}
+
+function limpar(){
+    document.getElementById("lista1").value="";
+    document.getElementById("lista2").value="";
+    document.querySelector("#resultado tbody").innerHTML="";
+    localStorage.removeItem("dados");
+}
+
+window.onload = function(){
+    const dados = JSON.parse(localStorage.getItem("dados"));
+    if(dados){
+        document.getElementById("lista1").value = dados.lista1;
+        document.getElementById("lista2").value = dados.lista2;
+        document.querySelector("#resultado tbody").innerHTML = dados.tabela;
+    }
+}
+</script>
+
+</body>
+</html>
